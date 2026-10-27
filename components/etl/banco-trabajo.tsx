@@ -258,8 +258,8 @@ export function BancoTrabajo() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-4">
-      {/* Columna del mapa: primero en móvil y fija al hacer scroll en escritorio. */}
-      <aside className="min-w-0 lg:sticky lg:top-6 lg:self-start">
+      {/* Columna del mapa: primero en móvil; en escritorio, a la derecha y fija al hacer scroll. */}
+      <aside className="min-w-0 lg:sticky lg:top-6 lg:order-last lg:self-start">
         <PanelMapa ciudadesSel={ciudadesSel} activa={ciudadActiva} alSeleccionar={setCiudadActiva} validos={validos} />
       </aside>
 

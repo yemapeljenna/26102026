@@ -163,10 +163,3 @@
 .leaflet-container a.leaflet-popup-close-button {
   color: var(--muted-foreground);
 }
-.leaflet-container .leaflet-control-attribution {
-  background: color-mix(in oklch, var(--card) 80%, transparent);
-  color: var(--muted-foreground);
-}
-.leaflet-container .leaflet-control-attribution a {
-  color: var(--foreground);
-}

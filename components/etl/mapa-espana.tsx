@@ -43,7 +43,8 @@ export function MapaEspana({
   alSeleccionar: (id: string) => void
 }) {
   return (
-    <MapContainer bounds={LIMITES} boundsOptions={OPCIONES_ENCUADRE} zoomSnap={0.5} className="size-full">
+    // Sin control de atribución: así no aparece el prefijo «Leaflet» con la bandera.
+    <MapContainer bounds={LIMITES} boundsOptions={OPCIONES_ENCUADRE} zoomSnap={0.5} attributionControl={false} className="size-full">
       {/* Teselas de 512 px: Leaflet necesita tileSize 512 y zoomOffset -1 (documentación de MapTiler). */}
       <TileLayer
         url={`https://api.maptiler.com/maps/dataviz-dark/{z}/{x}/{y}.png?key=${claveMapTiler}`}
@@ -51,7 +52,6 @@ export function MapaEspana({
         zoomOffset={-1}
         minZoom={1}
         crossOrigin
-        attribution='&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
       />
       <AjustarTamano />
       {CIUDADES.map((c) => {
