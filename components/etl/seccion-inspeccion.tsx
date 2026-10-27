@@ -49,10 +49,22 @@ function descargar(nombre: string, datos: unknown) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-function JsonOriginal({ ciudades, inicio, fin }: { ciudades: ExtraccionCiudad[]; inicio: string; fin: string }) {
+function JsonOriginal({
+  ciudades,
+  ciudadActiva,
+  alCambiarCiudad,
+  inicio,
+  fin,
+}: {
+  ciudades: ExtraccionCiudad[]
+  ciudadActiva: string
+  alCambiarCiudad: (id: string) => void
+  inicio: string
+  fin: string
+}) {
   const conJson = ciudades.filter((c) => c.json !== undefined)
-  const [elegida, setElegida] = React.useState<string | null>(null)
-  const actual = conJson.find((c) => c.ciudad.id === elegida) ?? conJson[0]
+  // Si la ciudad activa no tiene JSON (no extraída o con error), se muestra la primera disponible.
+  const actual = conJson.find((c) => c.ciudad.id === ciudadActiva) ?? conJson[0]
 
   if (!actual) {
     return <p className="text-sm text-muted-foreground">Todavía no se ha descargado ninguna respuesta.</p>
@@ -67,7 +79,7 @@ function JsonOriginal({ ciudades, inicio, fin }: { ciudades: ExtraccionCiudad[];
               size="sm"
               variant={c === actual ? "default" : "outline"}
               aria-pressed={c === actual}
-              onClick={() => setElegida(c.ciudad.id)}
+              onClick={() => alCambiarCiudad(c.ciudad.id)}
             >
               {c.ciudad.nombre}
             </Button>
@@ -226,6 +238,8 @@ export function SeccionInspeccion({
   pestana,
   alCambiarPestana,
   ciudades,
+  ciudadActiva,
+  alCambiarCiudad,
   inicio,
   fin,
   procesado,
@@ -236,6 +250,8 @@ export function SeccionInspeccion({
   pestana: PestanaInspeccion
   alCambiarPestana: (p: PestanaInspeccion) => void
   ciudades: ExtraccionCiudad[]
+  ciudadActiva: string
+  alCambiarCiudad: (id: string) => void
   inicio: string
   fin: string
   procesado: ResultadoProcesado | null
@@ -277,7 +293,7 @@ export function SeccionInspeccion({
           </div>
 
           <TabsContent value="json" className="pt-3">
-            <JsonOriginal ciudades={ciudades} inicio={inicio} fin={fin} />
+            <JsonOriginal ciudades={ciudades} ciudadActiva={ciudadActiva} alCambiarCiudad={alCambiarCiudad} inicio={inicio} fin={fin} />
           </TabsContent>
 
           <TabsContent value="transformados" className="grid gap-3 pt-3">

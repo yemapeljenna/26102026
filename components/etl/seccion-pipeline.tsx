@@ -57,9 +57,9 @@ export function SeccionPipeline({
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-5">
-        <ol className="grid gap-2 lg:grid-cols-[repeat(5,minmax(0,1fr))] lg:gap-0" aria-label="Fases del pipeline">
+        <ol className="grid gap-2 xl:grid-cols-[repeat(5,minmax(0,1fr))] xl:gap-0" aria-label="Fases del pipeline">
           {fases.map((f, i) => (
-            <li key={f.id} className="flex flex-col items-stretch lg:flex-row lg:items-stretch">
+            <li key={f.id} className="flex flex-col items-stretch xl:flex-row xl:items-stretch">
               <article
                 aria-label={`Fase ${i + 1}: ${f.titulo}`}
                 className={cn(
@@ -100,9 +100,9 @@ export function SeccionPipeline({
                 </div>
               </article>
               {i < fases.length - 1 && (
-                <div aria-hidden className="flex items-center justify-center py-0.5 text-muted-foreground lg:px-1 lg:py-0">
-                  <ArrowDown className="size-4 lg:hidden" />
-                  <ArrowRight className="hidden size-4 lg:block" />
+                <div aria-hidden className="flex items-center justify-center py-0.5 text-muted-foreground xl:px-1 xl:py-0">
+                  <ArrowDown className="size-4 xl:hidden" />
+                  <ArrowRight className="hidden size-4 xl:block" />
                 </div>
               )}
             </li>

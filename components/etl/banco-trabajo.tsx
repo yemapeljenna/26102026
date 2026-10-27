@@ -13,6 +13,7 @@ import { formatoEntero } from "@/lib/etl/formato"
 import { procesarRespuestas } from "@/lib/etl/pipeline"
 import { aFilaCarga } from "@/lib/etl/tipos"
 import { Contadores } from "./contadores"
+import { PanelMapa } from "./panel-mapa"
 import { SeccionCarga } from "./seccion-carga"
 import { SeccionConfiguracion } from "./seccion-configuracion"
 import { SeccionInspeccion } from "./seccion-inspeccion"
@@ -32,6 +33,8 @@ export function BancoTrabajo() {
   const [inicio, setInicio] = React.useState("2026-09-01")
   const [fin, setFin] = React.useState("2026-09-30")
   const validacion = React.useMemo(() => validarRango(inicio, fin), [inicio, fin])
+  // Ciudad activa: compartida por el mapa y las pestañas de ciudad del JSON original.
+  const [ciudadActiva, setCiudadActiva] = React.useState(CIUDADES[0].id)
 
   // ── Extracción (los JSON originales se conservan en memoria durante la sesión) ──
   const [extraccion, setExtraccion] = React.useState<Extraccion | null>(null)
@@ -254,79 +257,88 @@ export function BancoTrabajo() {
       : null
 
   return (
-    <div className="grid gap-6">
-      <SeccionConfiguracion
-        ciudades={ciudadesSel}
-        alCambiarCiudades={setCiudadesSel}
-        inicio={inicio}
-        fin={fin}
-        alCambiarInicio={setInicio}
-        alCambiarFin={setFin}
-        validacion={validacion}
-        hoy={hoy}
-        ocupado={ocupado}
-        hayResultados={!!extraccion}
-        alExtraer={() => void extraer()}
-      />
+    <div className="grid gap-6 lg:grid-cols-4">
+      {/* Columna del mapa: primero en móvil y fija al hacer scroll en escritorio. */}
+      <aside className="min-w-0 lg:sticky lg:top-6 lg:self-start">
+        <PanelMapa ciudadesSel={ciudadesSel} activa={ciudadActiva} alSeleccionar={setCiudadActiva} validos={validos} />
+      </aside>
 
-      <SeccionPipeline
-        fases={fases}
-        ciudades={ciudades}
-        extrayendo={extrayendo}
-        alInspeccionar={inspeccionar}
-        alReintentar={(id) => void reintentarCiudad(id)}
-      />
+      <div className="grid min-w-0 gap-6 lg:col-span-3">
+        <SeccionConfiguracion
+          ciudades={ciudadesSel}
+          alCambiarCiudades={setCiudadesSel}
+          inicio={inicio}
+          fin={fin}
+          alCambiarInicio={setInicio}
+          alCambiarFin={setFin}
+          validacion={validacion}
+          hoy={hoy}
+          ocupado={ocupado}
+          hayResultados={!!extraccion}
+          alExtraer={() => void extraer()}
+        />
 
-      <Contadores
-        v={{
-          extraidos: procesado?.transformados.length ?? 0,
-          validos: validos.length,
-          rechazados: limpieza?.rechazados.length ?? 0,
-          rechazadosCalidad: limpieza?.rechazadosCalidad ?? 0,
-          duplicados: limpieza?.duplicados ?? 0,
-          coinciden: resultado.coincidentes.length,
-          seleccionados: resultado.paraCargar.length,
-        }}
-      />
+        <SeccionPipeline
+          fases={fases}
+          ciudades={ciudades}
+          extrayendo={extrayendo}
+          alInspeccionar={inspeccionar}
+          alReintentar={(id) => void reintentarCiudad(id)}
+        />
 
-      <SeccionSeleccion
-        ciudadesDisponibles={ciudades.map((c) => c.ciudad.nombre)}
-        totalValidos={validos.length}
-        filtros={filtros}
-        alCambiarFiltros={setFiltros}
-        orden={orden}
-        alCambiarOrden={setOrden}
-        resultado={resultado}
-        seleccion={seleccion}
-        alCambiarSeleccion={setSeleccion}
-        alRestablecer={() => {
-          setFiltros(filtrosIniciales(ciudades.map((c) => c.ciudad.nombre)))
-          setOrden(ORDEN_INICIAL)
-        }}
-        cargaEnCurso={!!carga?.enCurso}
-      />
+        <Contadores
+          v={{
+            extraidos: procesado?.transformados.length ?? 0,
+            validos: validos.length,
+            rechazados: limpieza?.rechazados.length ?? 0,
+            rechazadosCalidad: limpieza?.rechazadosCalidad ?? 0,
+            duplicados: limpieza?.duplicados ?? 0,
+            coinciden: resultado.coincidentes.length,
+            seleccionados: resultado.paraCargar.length,
+          }}
+        />
 
-      <SeccionInspeccion
-        pestana={pestana}
-        alCambiarPestana={setPestana}
-        ciudades={ciudades}
-        inicio={extraccion?.inicio ?? inicio}
-        fin={extraccion?.fin ?? fin}
-        procesado={procesado}
-        paraCargar={resultado.paraCargar}
-        huella={huellaActual}
-        versionDestino={versionDestino}
-      />
+        <SeccionSeleccion
+          ciudadesDisponibles={ciudades.map((c) => c.ciudad.nombre)}
+          totalValidos={validos.length}
+          filtros={filtros}
+          alCambiarFiltros={setFiltros}
+          orden={orden}
+          alCambiarOrden={setOrden}
+          resultado={resultado}
+          seleccion={seleccion}
+          alCambiarSeleccion={setSeleccion}
+          alRestablecer={() => {
+            setFiltros(filtrosIniciales(ciudades.map((c) => c.ciudad.nombre)))
+            setOrden(ORDEN_INICIAL)
+          }}
+          cargaEnCurso={!!carga?.enCurso}
+        />
 
-      <SeccionCarga
-        integracion={integracion}
-        totalParaCargar={resultado.paraCargar.length}
-        huellaActual={huellaActual}
-        carga={carga}
-        alSubir={subir}
-        alReintentarFallidos={reintentarFallidos}
-        alVerDestino={() => inspeccionar("supabase")}
-      />
+        <SeccionInspeccion
+          pestana={pestana}
+          alCambiarPestana={setPestana}
+          ciudades={ciudades}
+          ciudadActiva={ciudadActiva}
+          alCambiarCiudad={setCiudadActiva}
+          inicio={extraccion?.inicio ?? inicio}
+          fin={extraccion?.fin ?? fin}
+          procesado={procesado}
+          paraCargar={resultado.paraCargar}
+          huella={huellaActual}
+          versionDestino={versionDestino}
+        />
+
+        <SeccionCarga
+          integracion={integracion}
+          totalParaCargar={resultado.paraCargar.length}
+          huellaActual={huellaActual}
+          carga={carga}
+          alSubir={subir}
+          alReintentarFallidos={reintentarFallidos}
+          alVerDestino={() => inspeccionar("supabase")}
+        />
+      </div>
     </div>
   )
 }

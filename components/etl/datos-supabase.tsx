@@ -93,7 +93,7 @@ export function DatosSupabase({ version }: { version: number }) {
         </AlertDescription>
       </Alert>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto] lg:items-end">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(5,minmax(0,1fr))_auto] xl:items-end">
         <div className="grid gap-1">
           <Label htmlFor="sb-ciudad" className="text-xs">Ciudad</Label>
           <select id="sb-ciudad" className={claseSelect} value={consulta.ciudad} onChange={(e) => cambiar({ ciudad: e.target.value })}>

@@ -24,7 +24,7 @@ export function Contadores({ v }: { v: ValoresContadores }) {
   ]
   return (
     <section aria-label="Contadores del conjunto de datos">
-      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
         {items.map((i) => (
           <div
             key={i.etiqueta}

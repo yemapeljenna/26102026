@@ -2,7 +2,7 @@ import { BancoTrabajo } from "@/components/etl/banco-trabajo"
 
 export default function Page() {
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
+    <main className="mx-auto w-full max-w-screen-2xl px-4 py-8 sm:px-6">
       <header className="mb-6 grid gap-2">
         <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
           Big Data · Práctica 1

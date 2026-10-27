@@ -50,3 +50,11 @@ export type PestanaInspeccion =
   | "rechazados"
   | "vista-previa"
   | "supabase"
+
+/** Resumen del periodo de una ciudad, calculado con sus registros válidos. */
+export interface ResumenCiudad {
+  registros: number
+  temperaturaMedia: number
+  humedadMedia: number
+  precipitacionTotal: number
+}

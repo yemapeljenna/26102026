@@ -56,7 +56,7 @@ export function SeccionConfiguracion({
           API histórica de Open-Meteo · variables horarias de temperatura, humedad relativa y precipitación · horas en UTC, °C y mm.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-6 lg:grid-cols-[1fr_1fr_1.1fr]">
+      <CardContent className="grid gap-6 xl:grid-cols-[1fr_1fr_1.1fr]">
         <fieldset className="grid gap-2">
           <legend className="mb-2 text-sm font-medium">Ciudades</legend>
           {CIUDADES.map((c) => (
