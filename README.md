@@ -19,7 +19,7 @@ cp .env.example .env.local   # y rellena los valores
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` (o `SUPABASE_URL`) | servidor | URL del proyecto Supabase. |
 | `SUPABASE_SECRET_KEY` | **solo servidor** | Clave secreta (`sb_secret_…` o la antigua `service_role`). Nunca con prefijo `NEXT_PUBLIC_`. |
-| `NEXT_PUBLIC_MAPTILER_KEY` | navegador | Clave de [MapTiler](https://cloud.maptiler.com/account/keys/) para las teselas del mapa (estilo `dataviz-dark`). Es pública: restríngela por dominio en MapTiler. Sin ella, el mapa muestra un aviso. |
+| `NEXT_PUBLIC_MAPTILER_KEY` | navegador | Clave de [MapTiler](https://cloud.maptiler.com/account/keys/) para las teselas del mapa (estilo `dataviz`). Es pública: restríngela por dominio en MapTiler. Sin ella, el mapa muestra un aviso. |
 | `ETL_PERMITIR_EN_PRODUCCION` | servidor | Opcional. Ver «Seguridad». |
 
 ### Base de datos

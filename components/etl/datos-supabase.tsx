@@ -16,7 +16,7 @@ import { formatoEntero, formatoNumero } from "@/lib/etl/formato"
 import { FechaUtc } from "./celdas"
 import { EncabezadoColumna, Paginador, TAMANOS_PAGINA } from "./tabla-paginada"
 
-const claseSelect = "h-8 w-full rounded-lg border border-input bg-transparent px-2 text-sm dark:bg-input/30"
+const claseSelect = "h-8 w-full rounded-lg border border-input bg-card px-2 text-sm"
 
 interface Consulta {
   ciudad: string
@@ -84,14 +84,10 @@ export function DatosSupabase({ version }: { version: number }) {
 
   return (
     <div className="grid gap-4">
-      <Alert>
-        <Database />
-        <AlertTitle>Datos persistidos en Supabase</AlertTitle>
-        <AlertDescription>
-          Esta pestaña lee la tabla <code>mediciones_meteorologicas</code> en el servidor de base de datos. Los datos locales de las otras pestañas
-          solo existen en tu navegador hasta que los subes.
-        </AlertDescription>
-      </Alert>
+      <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Database aria-hidden className="size-4 shrink-0 text-primary" />
+        Lo que hay guardado ahora mismo en Supabase.
+      </p>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(5,minmax(0,1fr))_auto] xl:items-end">
         <div className="grid gap-1">
@@ -155,9 +151,9 @@ export function DatosSupabase({ version }: { version: number }) {
             <Badge variant="outline">Persistido</Badge>
             {formatoEntero(estado.total)} filas en destino con estos filtros · leído a las {estado.leidoEn}
           </p>
-          <div className="rounded-lg border">
-            <Table aria-label="Registros almacenados en Supabase">
-              <TableHeader>
+          <div className="overflow-hidden rounded-2xl bg-codigo">
+            <Table aria-label="Registros almacenados en Supabase" contenedorClassName="max-h-[36rem] overflow-auto">
+              <TableHeader className="sticky top-0 z-10 bg-secondary">
                 <TableRow>
                   <TableHead scope="col" className="h-auto py-2 text-right"><EncabezadoColumna titulo="id" /></TableHead>
                   <TableHead scope="col" className="h-auto py-2"><EncabezadoColumna titulo="Ciudad" /></TableHead>

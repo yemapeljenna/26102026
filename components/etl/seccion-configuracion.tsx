@@ -1,16 +1,107 @@
 "use client"
 
-import { CircleAlert, Download, TriangleAlert } from "lucide-react"
+import * as React from "react"
+import { CalendarDays, Check, CircleAlert, Download, TriangleAlert } from "lucide-react"
+import type { DateRange } from "react-day-picker"
+import { es } from "react-day-picker/locale"
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Calendar } from "@/components/ui/calendar"
+import { Card, CardContent } from "@/components/ui/card"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CIUDADES } from "@/lib/etl/ciudades"
 import { FECHA_MINIMA_ARCHIVO, MAX_DIAS_EXTRACCION, type ValidacionRango } from "@/lib/etl/fechas"
 import { formatoEntero } from "@/lib/etl/formato"
+import { cn } from "@/lib/utils"
+
+// Las fechas son días UTC: "AAAA-MM-DD" ↔ Date a medianoche UTC (el calendario trabaja en UTC)
+const aFecha = (s: string) => (s ? new Date(`${s}T00:00:00Z`) : undefined)
+const aTexto = (d: Date) => d.toISOString().slice(0, 10)
+const formatoDia = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })
+
+function SelectorFechas({
+  inicio,
+  fin,
+  hoy,
+  dias,
+  invalido,
+  deshabilitado,
+  alCambiar,
+}: {
+  inicio: string
+  fin: string
+  hoy: string
+  dias: number | null
+  invalido: boolean
+  deshabilitado: boolean
+  alCambiar: (inicio: string, fin: string) => void
+}) {
+  const [abierto, setAbierto] = React.useState(false)
+  // Rango en edición: solo se aplica cuando tiene inicio y fin
+  const [rango, setRango] = React.useState<DateRange | undefined>()
+  const actual = { from: aFecha(inicio), to: aFecha(fin) }
+
+  function cambiarAbierto(v: boolean) {
+    setAbierto(v)
+    setRango(v ? actual : undefined)
+  }
+
+  function seleccionar(r: DateRange | undefined) {
+    setRango(r)
+    if (r?.from && r.to) {
+      alCambiar(aTexto(r.from), aTexto(r.to))
+      setAbierto(false)
+    }
+  }
+
+  return (
+    <Popover open={abierto} onOpenChange={cambiarAbierto}>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            size="lg"
+            disabled={deshabilitado}
+            aria-invalid={invalido}
+            className="h-10 w-full justify-start gap-2 bg-card font-normal sm:w-auto"
+          />
+        }
+      >
+        <CalendarDays aria-hidden className="text-primary" />
+        {inicio && fin ? `${formatoDia.format(aFecha(inicio))} – ${formatoDia.format(aFecha(fin))}` : "Elige el periodo"}
+        {dias !== null && dias > 0 && <span className="text-xs text-muted-foreground tabular-nums">· {dias} días</span>}
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-auto p-0">
+        <Calendar
+          mode="range"
+          // Con un rango completo, el siguiente clic empieza uno nuevo
+          resetOnSelect
+          timeZone="UTC"
+          locale={es}
+          numberOfMonths={2}
+          defaultMonth={actual.from}
+          selected={rango}
+          onSelect={seleccionar}
+          // diferencia en días entre los extremos: 30 = 31 días incluidos
+          max={MAX_DIAS_EXTRACCION - 1}
+          disabled={[{ before: aFecha(FECHA_MINIMA_ARCHIVO)! }, { after: aFecha(hoy)! }]}
+          className="p-3"
+        />
+        <p className="px-3 pb-3 text-xs text-muted-foreground">Elige el primer y el último día (máximo {MAX_DIAS_EXTRACCION}).</p>
+      </PopoverContent>
+    </Popover>
+  )
+}
 
 export function SeccionConfiguracion({
   ciudades,
@@ -24,6 +115,8 @@ export function SeccionConfiguracion({
   ocupado,
   hayResultados,
   alExtraer,
+  limitado,
+  alReintentar,
 }: {
   ciudades: string[]
   alCambiarCiudades: (ids: string[]) => void
@@ -36,131 +129,139 @@ export function SeccionConfiguracion({
   ocupado: string | null
   hayResultados: boolean
   alExtraer: () => void
+  /** Open-Meteo respondió 429: aviso único con «Reintentar». */
+  limitado: boolean
+  alReintentar: () => void
 }) {
+  const [confirmando, setConfirmando] = React.useState(false)
   const errores = [...validacion.errores]
   if (ciudades.length === 0) errores.push("Selecciona al menos una ciudad.")
   const dias = validacion.dias
-  const previstos = dias ? ciudades.length * dias * 24 : null
-  const alternar = (id: string, marcado: boolean) =>
-    alCambiarCiudades(
-      CIUDADES.map((c) => c.id).filter((x) => (x === id ? marcado : ciudades.includes(x)))
-    )
+  const previstos = dias && ciudades.length ? ciudades.length * dias * 24 : null
+  const puedeExtraer = errores.length === 0 && !ocupado && previstos !== null
+  const alternar = (id: string) =>
+    alCambiarCiudades(CIUDADES.map((c) => c.id).filter((x) => (x === id ? !ciudades.includes(id) : ciudades.includes(x))))
+
+  // Solo se pide confirmación si ya hay datos que se van a sustituir
+  const extraer = () => (hayResultados ? setConfirmando(true) : alExtraer())
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <h2>1. Configuración de la extracción</h2>
-        </CardTitle>
-        <CardDescription>
-          API histórica de Open-Meteo · variables horarias de temperatura, humedad relativa y precipitación · horas en UTC, °C y mm.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-6 xl:grid-cols-[1fr_1fr_1.1fr]">
-        <fieldset className="grid gap-2">
-          <legend className="mb-2 text-sm font-medium">Ciudades</legend>
-          {CIUDADES.map((c) => (
-            <Label key={c.id} className="font-normal">
-              <Checkbox
-                checked={ciudades.includes(c.id)}
-                onCheckedChange={(v) => alternar(c.id, v)}
-                disabled={!!ocupado}
-              />
-              {c.nombre}
-              <span className="text-xs text-muted-foreground tabular-nums">
-                {c.latitud.toFixed(4)}, {c.longitud.toFixed(4)}
+    <Card id="configuracion" data-aparecer aria-labelledby="titulo-configuracion">
+      <h2 id="titulo-configuracion" className="sr-only">
+        Configuración de la extracción
+      </h2>
+      <CardContent className="grid gap-3">
+        {/* Barra: ciudades | periodo | botón (apilada en móvil) */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-0 lg:divide-x">
+          <fieldset className="grid min-w-0 flex-1 gap-2 lg:pr-5">
+            <legend className="mb-2 text-xs font-medium text-muted-foreground">Ciudades</legend>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {CIUDADES.map((c) => {
+                const activa = ciudades.includes(c.id)
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    aria-pressed={activa}
+                    disabled={!!ocupado}
+                    onClick={() => alternar(c.id)}
+                    className={cn(
+                      "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50",
+                      activa ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {activa && <Check aria-hidden className="size-3.5" />}
+                    {c.nombre}
+                  </button>
+                )
+              })}
+              <span className="ml-1 flex gap-1">
+                <Button variant="ghost" size="xs" disabled={!!ocupado || ciudades.length === CIUDADES.length} onClick={() => alCambiarCiudades(CIUDADES.map((c) => c.id))}>
+                  Todas
+                </Button>
+                <Button variant="ghost" size="xs" disabled={!!ocupado || ciudades.length === 0} onClick={() => alCambiarCiudades([])}>
+                  Ninguna
+                </Button>
               </span>
-            </Label>
-          ))}
-          <div className="mt-1 flex gap-2">
-            <Button variant="ghost" size="xs" disabled={!!ocupado} onClick={() => alCambiarCiudades(CIUDADES.map((c) => c.id))}>
-              Todas
-            </Button>
-            <Button variant="ghost" size="xs" disabled={!!ocupado} onClick={() => alCambiarCiudades([])}>
-              Ninguna
-            </Button>
-          </div>
-        </fieldset>
+            </div>
+          </fieldset>
 
-        <div className="grid content-start gap-4">
-          <div className="grid gap-1.5">
-            <Label htmlFor="fecha-inicio">Fecha inicial (UTC)</Label>
-            <Input
-              id="fecha-inicio"
-              type="date"
-              value={inicio}
-              min={FECHA_MINIMA_ARCHIVO}
-              max={hoy}
-              disabled={!!ocupado}
-              aria-invalid={validacion.errores.length > 0}
-              onChange={(e) => alCambiarInicio(e.target.value)}
+          <div className="grid gap-2 lg:px-5">
+            <p className="text-xs font-medium text-muted-foreground">Periodo (UTC)</p>
+            <SelectorFechas
+              inicio={inicio}
+              fin={fin}
+              hoy={hoy}
+              dias={dias}
+              invalido={validacion.errores.length > 0}
+              deshabilitado={!!ocupado}
+              alCambiar={(i, f) => {
+                alCambiarInicio(i)
+                alCambiarFin(f)
+              }}
             />
           </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="fecha-fin">Fecha final (UTC, incluida)</Label>
-            <Input
-              id="fecha-fin"
-              type="date"
-              value={fin}
-              min={inicio || FECHA_MINIMA_ARCHIVO}
-              max={hoy}
-              disabled={!!ocupado}
-              aria-invalid={validacion.errores.length > 0}
-              onChange={(e) => alCambiarFin(e.target.value)}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">Máximo {MAX_DIAS_EXTRACCION} días por extracción.</p>
-        </div>
 
-        <div className="grid content-start gap-3">
-          <div className="rounded-lg bg-muted/60 p-3">
-            <p className="text-sm font-medium">Volumen previsto</p>
-            {previstos !== null && ciudades.length > 0 ? (
-              <>
-                <p className="mt-1 text-2xl font-semibold tabular-nums">{formatoEntero(previstos)} registros</p>
-                <p className="text-xs text-muted-foreground">
-                  {ciudades.length} {ciudades.length === 1 ? "ciudad" : "ciudades"} × {dias} {dias === 1 ? "día" : "días"} × 24 horas ·{" "}
-                  {ciudades.length} {ciudades.length === 1 ? "petición" : "peticiones"} HTTP
-                </p>
-              </>
-            ) : (
-              <p className="mt-1 text-sm text-muted-foreground">Corrige la configuración para calcularlo.</p>
-            )}
-          </div>
-
-          {errores.length > 0 && (
-            <Alert variant="destructive">
-              <CircleAlert />
-              <AlertTitle>No se puede extraer todavía</AlertTitle>
-              <AlertDescription>
-                <ul className="list-disc pl-4">
-                  {errores.map((e) => (
-                    <li key={e}>{e}</li>
-                  ))}
-                </ul>
-              </AlertDescription>
-            </Alert>
-          )}
-          {validacion.avisos.map((a) => (
-            <Alert key={a}>
-              <TriangleAlert />
-              <AlertTitle>Aviso</AlertTitle>
-              <AlertDescription>{a}</AlertDescription>
-            </Alert>
-          ))}
-
-          <Button size="lg" disabled={errores.length > 0 || !!ocupado} onClick={alExtraer}>
-            <Download />
-            Extraer datos
-          </Button>
-          {ocupado && <p className="text-xs text-muted-foreground">{ocupado}</p>}
-          {hayResultados && !ocupado && (
-            <p className="text-xs text-muted-foreground">
-              Una nueva extracción sustituye los datos locales actuales y vacía la selección.
+          <div className="grid gap-1 lg:pl-5">
+            <Button size="lg" className="h-11 px-5 text-base" disabled={!puedeExtraer} onClick={extraer}>
+              <Download />
+              {previstos !== null ? `Extraer ${formatoEntero(previstos)} registros` : "Extraer datos"}
+            </Button>
+            <p className="text-xs text-muted-foreground tabular-nums">
+              {ocupado ??
+                (previstos !== null
+                  ? `${ciudades.length} ${ciudades.length === 1 ? "ciudad" : "ciudades"} × ${dias} ${dias === 1 ? "día" : "días"} × 24 h`
+                  : "Elige ciudades y periodo")}
             </p>
-          )}
+          </div>
         </div>
+
+        {limitado && (
+          <div role="alert" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl bg-aviso-suave px-4 py-3 text-sm text-aviso">
+            <TriangleAlert aria-hidden className="size-4 shrink-0" />
+            <p className="flex-1">Open-Meteo ha recibido demasiadas peticiones esta hora. Prueba de nuevo en un rato.</p>
+            <Button variant="outline" size="sm" disabled={!!ocupado} onClick={alReintentar}>
+              Reintentar
+            </Button>
+          </div>
+        )}
+
+        {/* Problemas y avisos, en una línea cada uno */}
+        {errores.map((e) => (
+          <p key={e} className="flex items-center gap-1.5 text-sm text-destructive">
+            <CircleAlert aria-hidden className="size-4 shrink-0" />
+            {e}
+          </p>
+        ))}
+        {validacion.avisos.map((a) => (
+          <p key={a} className="flex items-center gap-1.5 text-sm text-aviso">
+            <TriangleAlert aria-hidden className="size-4 shrink-0" />
+            {a}
+          </p>
+        ))}
       </CardContent>
+
+      <AlertDialog open={confirmando} onOpenChange={setConfirmando}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Sustituir los datos actuales?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Perderás los datos que tienes ahora en el navegador. Lo que ya guardaste en Supabase no se toca.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmando(false)
+                alExtraer()
+              }}
+            >
+              Extraer de nuevo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   )
 }

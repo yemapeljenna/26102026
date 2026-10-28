@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -100,6 +100,8 @@ export function TablaPaginada<T>({
   etiqueta,
   vacio,
   filaResaltada,
+  orden,
+  alOrdenar,
 }: {
   filas: T[]
   columnas: Columna<T>[]
@@ -107,6 +109,9 @@ export function TablaPaginada<T>({
   etiqueta: string
   vacio: React.ReactNode
   filaResaltada?: (fila: T) => boolean
+  /** Orden actual; con `alOrdenar`, las columnas incluidas en `ordenables` se ordenan al pulsar su cabecera. */
+  orden?: { columna: string; direccion: "asc" | "desc"; ordenables: readonly string[] }
+  alOrdenar?: (columna: string) => void
 }) {
   const [pagina, setPagina] = React.useState(0)
   const [tamano, setTamano] = React.useState<number>(TAMANOS_PAGINA[0])
@@ -118,18 +123,37 @@ export function TablaPaginada<T>({
 
   return (
     <div>
-      <div className="rounded-lg border">
-        <Table aria-label={etiqueta}>
-          <TableHeader>
+      <div className="overflow-hidden rounded-2xl bg-codigo">
+        {/* Scroll interno para que la cabecera quede fija */}
+        <Table aria-label={etiqueta} contenedorClassName="max-h-[36rem] overflow-auto">
+          <TableHeader className="sticky top-0 z-10 bg-secondary">
             <TableRow>
               {columnas.map((c) => (
                 <TableHead
                   key={c.id}
                   scope="col"
+                  aria-sort={orden?.columna === c.id ? (orden.direccion === "asc" ? "ascending" : "descending") : undefined}
                   className={cn("h-auto py-2 align-bottom", c.numerica && "text-right", c.className)}
                 >
                   {typeof c.encabezado === "function" ? (
                     c.encabezado(filasPagina)
+                  ) : orden && alOrdenar && orden.ordenables.includes(c.id) ? (
+                    // Cabecera ordenable: flecha en la columna activa
+                    <button
+                      type="button"
+                      onClick={() => alOrdenar(c.id)}
+                      className={cn(
+                        "group inline-flex items-end gap-1 rounded text-left outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50",
+                        c.numerica && "flex-row-reverse text-right"
+                      )}
+                    >
+                      <EncabezadoColumna titulo={c.encabezado} unidad={c.unidad} />
+                      {orden.columna === c.id ? (
+                        orden.direccion === "asc" ? <ArrowUp aria-hidden className="mb-0.5 size-3.5 text-primary" /> : <ArrowDown aria-hidden className="mb-0.5 size-3.5 text-primary" />
+                      ) : (
+                        <ArrowUpDown aria-hidden className="mb-0.5 size-3.5 opacity-0 transition-opacity group-hover:opacity-50 group-focus-visible:opacity-50" />
+                      )}
+                    </button>
                   ) : (
                     <EncabezadoColumna titulo={c.encabezado} unidad={c.unidad} />
                   )}

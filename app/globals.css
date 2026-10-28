@@ -7,19 +7,6 @@
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: var(--font-sans);
-    --color-sidebar-ring: var(--sidebar-ring);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar: var(--sidebar);
-    --color-chart-5: var(--chart-5);
-    --color-chart-4: var(--chart-4);
-    --color-chart-3: var(--chart-3);
-    --color-chart-2: var(--chart-2);
-    --color-chart-1: var(--chart-1);
     --color-ring: var(--ring);
     --color-input: var(--input);
     --color-border: var(--border);
@@ -38,6 +25,18 @@
     --color-card: var(--card);
     --color-foreground: var(--foreground);
     --color-background: var(--background);
+    /* Colores propios del tema rosa */
+    --color-rosa-pastel: var(--rosa-pastel);
+    --color-rosa-pastel-foreground: var(--rosa-pastel-foreground);
+    --color-codigo: var(--codigo);
+    --color-exito: var(--exito);
+    --color-exito-suave: var(--exito-suave);
+    --color-error-suave: var(--error-suave);
+    --color-pendiente: var(--pendiente);
+    --color-aviso: var(--aviso);
+    --color-aviso-suave: var(--aviso-suave);
+    --shadow-tarjeta: 0 8px 30px -12px color-mix(in oklch, var(--primary) 25%, transparent);
+    --shadow-tarjeta-hover: 0 14px 36px -12px color-mix(in oklch, var(--primary) 35%, transparent);
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -47,73 +46,92 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Tema claro rosa pastel. Todo texto cumple WCAG AA (≥ 4,5:1) sobre su fondo, en ambos temas. */
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.525 0.223 3.958);
-    --primary-foreground: oklch(0.971 0.014 343.198);
-    --secondary: oklch(0.967 0.001 286.375);
-    --secondary-foreground: oklch(0.21 0.006 285.885);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.823 0.12 346.018);
-    --chart-2: oklch(0.656 0.241 354.308);
-    --chart-3: oklch(0.592 0.249 0.584);
-    --chart-4: oklch(0.525 0.223 3.958);
-    --chart-5: oklch(0.459 0.187 3.815);
+    /* Necesario para light-dark() de la paleta personalizada */
+    color-scheme: light;
+    --background: #fff7fa;
+    --foreground: #2d1b24;
+    --card: #ffffff;
+    --card-foreground: #2d1b24;
+    --popover: #ffffff;
+    --popover-foreground: #2d1b24;
+    /* Rosa intenso: botones, enlaces y elementos activos (texto blanco, 5,9:1) */
+    --primary: #c2185b;
+    --primary-foreground: #ffffff;
+    /* Fondos secundarios: cabeceras de tarjeta, chips y filas alternas */
+    --secondary: #fde4ec;
+    --secondary-foreground: #2d1b24;
+    --muted: #fde4ec;
+    --muted-foreground: #6b4e5c;
+    --accent: #fde4ec;
+    --accent-foreground: #2d1b24;
+    --destructive: #b42318;
+    --border: #f3d3df;
+    --input: #f3d3df;
+    --ring: #c2185b;
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.592 0.249 0.584);
-    --sidebar-primary-foreground: oklch(0.971 0.014 343.198);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    /* Acento pastel: solo detalles y gráficos; texto encima solo en #2d1b24 */
+    --rosa-pastel: #f4a7c0;
+    --rosa-pastel-foreground: #2d1b24;
+    --codigo: #fdf2f6;
+    /* #2e7d5b daba 4,39:1 sobre #e3f4ec; algo más oscuro para cumplir AA */
+    --exito: #2a7354;
+    --exito-suave: #e3f4ec;
+    --error-suave: #fde8e7;
+    --pendiente: #f3eaee;
+    /* Ámbar de «datos sin guardar» (5,2:1) */
+    --aviso: #8a5a00;
+    --aviso-suave: #fdf1d8;
+    /* Halo que sigue al cursor: anillo exterior y centro más intenso */
+    --halo-exterior: 22%;
+    --halo-interior: 35%;
+    /* Degradado del fondo de la página */
+    --fondo-inicio: #fff7fa;
+    --fondo-fin: #fde4ec;
 }
 
+/* Tema oscuro: mismos roles; el rosa intenso se aclara para leerse sobre fondo oscuro. */
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.459 0.187 3.815);
-    --primary-foreground: oklch(0.971 0.014 343.198);
-    --secondary: oklch(0.274 0.006 286.033);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.823 0.12 346.018);
-    --chart-2: oklch(0.656 0.241 354.308);
-    --chart-3: oklch(0.592 0.249 0.584);
-    --chart-4: oklch(0.525 0.223 3.958);
-    --chart-5: oklch(0.459 0.187 3.815);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.656 0.241 354.308);
-    --sidebar-primary-foreground: oklch(0.971 0.014 343.198);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    color-scheme: dark;
+    /* Contraste medido: texto ≥ 6,8:1 en cualquier fondo; bordes de controles ≥ 3:1; la tarjeta se separa del fondo por su borde */
+    --background: #140d11;
+    --foreground: #fbeef3;
+    --card: #22161d;
+    --card-foreground: #fbeef3;
+    --popover: #22161d;
+    --popover-foreground: #fbeef3;
+    /* Rosa claro con texto oscuro (8,6:1); como texto sobre las tarjetas, 9,3:1 */
+    --primary: #f4a7c0;
+    --primary-foreground: #2d1b24;
+    --secondary: #2e1f28;
+    --secondary-foreground: #fbeef3;
+    --muted: #2e1f28;
+    --muted-foreground: #d8bccb;
+    --accent: #2e1f28;
+    --accent-foreground: #fbeef3;
+    --destructive: #ff8a80;
+    --border: #4a3340;
+    /* Bordes de inputs, casillas y switch: 3:1 sobre tarjeta, fondo y secundario */
+    --input: #86687a;
+    --ring: #f4a7c0;
+    --codigo: #1a1015;
+    --exito: #7dd3a8;
+    --exito-suave: #183026;
+    --error-suave: #3a1a1a;
+    --pendiente: #2e1f28;
+    --aviso: #f5c26b;
+    --aviso-suave: #3a2a10;
+    /* Degradado casi plano: un final más claro se confundiría con las tarjetas */
+    --halo-exterior: 30%;
+    --halo-interior: 40%;
+    --fondo-inicio: #140d11;
+    --fondo-fin: #180f14;
+}
+
+/* Cristal: tarjetas principales translúcidas (75 % en claro y 70 % en oscuro: el texto sigue en AA sobre el centro del halo) */
+@utility cristal {
+  @apply border-secondary bg-card/75 backdrop-blur-md dark:border-border dark:bg-card/70;
 }
 
 @layer base {
@@ -123,37 +141,78 @@
   body {
     @apply bg-background text-foreground;
     }
+  /* Degradado fijo a pantalla completa: no se repite ni se corta al hacer scroll */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(180deg, var(--fondo-inicio), var(--fondo-fin));
+    }
+  /* Scroll suave a las anclas, dejando sitio a la navbar fija */
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
+    scroll-padding-top: 6rem;
     }
 }
+
+/* Aparición al hacer scroll: solo cuando el script está listo (html[data-aparicion]) y sin movimiento reducido */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-aparicion] [data-aparecer] {
+    transition: opacity 400ms ease-out, translate 400ms ease-out;
+  }
+  html[data-aparicion] [data-aparecer]:not([data-visible]) {
+    opacity: 0;
+    translate: 0 16px;
+  }
+}
+
+/* Sin animaciones ni transiciones si el usuario lo pide */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ── Mapa (Leaflet): colores del tema, sin estilos propios de Leaflet ── */
 .leaflet-container {
   background: var(--muted);
   font-family: var(--font-sans);
 }
+/* Zonas y etiquetas con los colores de la paleta por CSS (Leaflet no admite var() en sus atributos).
+   El relleno de cada zona va en línea, según el valor de la métrica (mapa-espana.tsx). */
 .zona-ciudad {
   stroke: var(--primary);
-  fill: var(--primary);
+  transition: stroke-width 200ms ease, fill 200ms ease;
+}
+.zona-ciudad:hover {
+  stroke-width: 3px;
 }
 /* Etiqueta permanente con el nombre de la ciudad */
 .leaflet-tooltip.etiqueta-ciudad {
-  background: var(--popover);
-  color: var(--popover-foreground);
-  border: 1px solid var(--border);
-  box-shadow: none;
+  background: var(--card);
+  color: var(--primary);
+  border: 1px solid color-mix(in oklch, var(--primary) 45%, var(--card));
+  box-shadow: var(--shadow-tarjeta);
   padding: 0.125rem 0.375rem;
   font-size: 0.6875rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 .leaflet-tooltip-top.etiqueta-ciudad::before {
-  border-top-color: var(--border);
+  border-top-color: color-mix(in oklch, var(--primary) 45%, var(--card));
 }
 .leaflet-popup-content-wrapper,
 .leaflet-popup-tip {
   background: var(--popover);
   color: var(--popover-foreground);
-  box-shadow: 0 0 0 1px var(--border);
+  box-shadow: 0 0 0 1px var(--border), var(--shadow-tarjeta-hover);
 }
 .leaflet-popup-content {
   margin: 0.625rem 0.75rem;

@@ -7,7 +7,7 @@ import type { Columna } from "./tabla-paginada"
 export function ValorBruto({ valor }: { valor: unknown }) {
   const d = describirValorBruto(valor)
   return (
-    <span className={cn("font-mono text-xs", d.especial && "rounded bg-amber-500/15 px-1 text-amber-900 dark:text-amber-200")}>
+    <span className={cn("font-mono text-xs", d.especial && "rounded bg-rosa-pastel px-1 text-rosa-pastel-foreground")}>
       {d.texto}
     </span>
   )

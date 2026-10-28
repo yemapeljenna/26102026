@@ -1,19 +1,22 @@
 "use client"
 
 import * as React from "react"
-import { Download, Info } from "lucide-react"
+import { Download, Info, ScanSearch } from "lucide-react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { aFilaCarga, type Medicion, type RegistroRechazado, type RegistroTransformado } from "@/lib/etl/tipos"
 import { formatoDuracion, formatoEntero } from "@/lib/etl/formato"
 import type { ResultadoProcesado } from "@/lib/etl/pipeline"
 import { cn } from "@/lib/utils"
+import { CabeceraTarjeta } from "./cabecera-tarjeta"
 import { columnasMedicion, FechaUtc, ValorBruto } from "./celdas"
 import { DatosSupabase } from "./datos-supabase"
+import { DetallesTecnicos } from "./detalles-tecnicos"
+import { EstadoVacio } from "./estado-vacio"
 import { TablaPaginada, type Columna } from "./tabla-paginada"
 import type { ExtraccionCiudad, PestanaInspeccion } from "./tipos-sesion"
 
@@ -67,22 +70,16 @@ function JsonOriginal({
   const actual = conJson.find((c) => c.ciudad.id === ciudadActiva) ?? conJson[0]
 
   if (!actual) {
-    return <p className="text-sm text-muted-foreground">Todavía no se ha descargado ninguna respuesta.</p>
+    return <EstadoVacio icono={Download}>Aún no hay datos descargados.</EstadoVacio>
   }
   return (
     <div className="grid gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <div role="group" aria-label="Ciudad" className="flex flex-wrap gap-1">
           {conJson.map((c) => (
-            <Button
-              key={c.ciudad.id}
-              size="sm"
-              variant={c === actual ? "default" : "outline"}
-              aria-pressed={c === actual}
-              onClick={() => alCambiarCiudad(c.ciudad.id)}
-            >
+            <button key={c.ciudad.id} type="button" aria-pressed={c === actual} onClick={() => alCambiarCiudad(c.ciudad.id)} className="rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-150 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 aria-pressed:bg-primary aria-pressed:text-primary-foreground not-aria-pressed:text-muted-foreground not-aria-pressed:hover:text-foreground">
               {c.ciudad.nombre}
-            </Button>
+            </button>
           ))}
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
@@ -105,19 +102,22 @@ function JsonOriginal({
           </Button>
         </div>
       </div>
-      <dl className="grid gap-1 text-xs sm:grid-cols-[auto_1fr] sm:gap-x-3">
-        <dt className="text-muted-foreground">Petición</dt>
-        <dd className="font-mono break-all">{actual.url}</dd>
-        <dt className="text-muted-foreground">Respuesta</dt>
-        <dd>
-          HTTP {actual.estadoHttp} · {formatoDuracion(actual.duracionMs)} · descargada {actual.descargadoEn?.replace("T", " ").slice(0, 19)} UTC
-        </dd>
-      </dl>
-      <p className="text-xs text-muted-foreground">
-        Los arrays se muestran recortados a {MAX_ELEMENTOS_VISTA} elementos; la descarga contiene el JSON completo, sin modificar.
-        Fíjate en que <code>hourly</code> trae arrays paralelos: la posición <em>i</em> de cada array corresponde a la hora <code>time[i]</code>.
-      </p>
-      <pre className="max-h-[28rem] overflow-auto rounded-lg border bg-muted/40 p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap">
+      <p className="text-xs text-muted-foreground">Vista recortada. La descarga trae el JSON completo.</p>
+      <DetallesTecnicos>
+        <dl className="grid gap-1 sm:grid-cols-[auto_1fr] sm:gap-x-3">
+          <dt>Petición</dt>
+          <dd className="font-mono break-all text-foreground">{actual.url}</dd>
+          <dt>Respuesta</dt>
+          <dd className="tabular-nums">
+            HTTP {actual.estadoHttp} · {formatoDuracion(actual.duracionMs)} · descargada {actual.descargadoEn?.replace("T", " ").slice(0, 19)} UTC
+          </dd>
+        </dl>
+        <p>
+          Los arrays se recortan a <span className="tabular-nums">{MAX_ELEMENTOS_VISTA}</span> elementos. <code>hourly</code> trae arrays paralelos: la
+          posición <em>i</em> de cada uno corresponde a la hora <code>time[i]</code>.
+        </p>
+      </DetallesTecnicos>
+      <pre className="max-h-[28rem] overflow-auto rounded-lg bg-codigo p-3 font-mono text-xs leading-relaxed text-foreground whitespace-pre-wrap">
         {jsonCompacto(actual.json)}
       </pre>
     </div>
@@ -126,30 +126,30 @@ function JsonOriginal({
 
 const columnasTransformados: Columna<RegistroTransformado>[] = [
   { id: "ciudad", encabezado: "Ciudad", celda: (r) => r.ciudad },
-  { id: "indice", encabezado: "Posición", unidad: "índice en arrays", numerica: true, celda: (r) => r.indice },
-  { id: "origen", encabezado: "time (original)", unidad: "sin zona", celda: (r) => <ValorBruto valor={r.fecha_hora_origen} /> },
+  { id: "indice", encabezado: "Posición", numerica: true, celda: (r) => r.indice },
+  { id: "origen", encabezado: "Hora recibida", celda: (r) => <ValorBruto valor={r.fecha_hora_origen} /> },
   {
     id: "fecha_hora",
-    encabezado: "fecha_hora",
-    unidad: "interpretada en UTC",
+    encabezado: "Hora",
+    unidad: "UTC",
     celda: (r) => (r.fecha_hora ? <FechaUtc iso={r.fecha_hora} /> : <ValorBruto valor={null} />),
   },
-  { id: "t", encabezado: "temperatura_c", unidad: "°C", numerica: true, celda: (r) => <ValorBruto valor={r.temperatura_c} /> },
-  { id: "h", encabezado: "humedad_pct", unidad: "%", numerica: true, celda: (r) => <ValorBruto valor={r.humedad_pct} /> },
-  { id: "p", encabezado: "precipitacion_mm", unidad: "mm", numerica: true, celda: (r) => <ValorBruto valor={r.precipitacion_mm} /> },
+  { id: "t", encabezado: "Temperatura", unidad: "°C", numerica: true, celda: (r) => <ValorBruto valor={r.temperatura_c} /> },
+  { id: "h", encabezado: "Humedad", unidad: "%", numerica: true, celda: (r) => <ValorBruto valor={r.humedad_pct} /> },
+  { id: "p", encabezado: "Precipitación", unidad: "mm", numerica: true, celda: (r) => <ValorBruto valor={r.precipitacion_mm} /> },
 ]
 
 const columnasRechazados: Columna<RegistroRechazado>[] = [
   { id: "ciudad", encabezado: "Ciudad", celda: (r) => r.registro.ciudad },
   { id: "indice", encabezado: "Posición", numerica: true, celda: (r) => r.registro.indice },
-  { id: "origen", encabezado: "time (original)", celda: (r) => <ValorBruto valor={r.registro.fecha_hora_origen} /> },
+  { id: "origen", encabezado: "Hora recibida", celda: (r) => <ValorBruto valor={r.registro.fecha_hora_origen} /> },
   { id: "t", encabezado: "Temperatura", unidad: "°C", numerica: true, celda: (r) => <ValorBruto valor={r.registro.temperatura_c} /> },
   { id: "h", encabezado: "Humedad", unidad: "%", numerica: true, celda: (r) => <ValorBruto valor={r.registro.humedad_pct} /> },
   { id: "p", encabezado: "Precipitación", unidad: "mm", numerica: true, celda: (r) => <ValorBruto valor={r.registro.precipitacion_mm} /> },
   {
     id: "tipo",
     encabezado: "Tipo",
-    celda: (r) => <Badge variant={r.tipo === "duplicado" ? "secondary" : "destructive"}>{r.tipo === "duplicado" ? "Duplicado" : "Calidad"}</Badge>,
+    celda: (r) => <Badge variant={r.tipo === "duplicado" ? "secondary" : "destructive"}>{r.tipo === "duplicado" ? "Repetido" : "No válido"}</Badge>,
   },
   {
     id: "motivo",
@@ -170,26 +170,26 @@ function Rechazados({ rechazados }: { rechazados: RegistroRechazado[] }) {
   return (
     <div className="grid gap-3">
       <p className="text-xs text-muted-foreground">
-        Aquí solo aparecen los descartes de la limpieza. Los registros que excluyen tus filtros siguen siendo válidos y no se cuentan como rechazados.
+        Solo lo que quitó la limpieza. Lo que excluyen tus filtros no cuenta aquí.
       </p>
       <div role="group" aria-label="Tipo de rechazo" className="flex flex-wrap gap-1">
         {([
           ["todos", `Todos (${formatoEntero(rechazados.length)})`],
-          ["calidad", `Calidad (${formatoEntero(n("calidad"))})`],
-          ["duplicado", `Duplicados (${formatoEntero(n("duplicado"))})`],
+          ["calidad", `No válidos (${formatoEntero(n("calidad"))})`],
+          ["duplicado", `Repetidos (${formatoEntero(n("duplicado"))})`],
         ] as const).map(([v, t]) => (
-          <Button key={v} size="sm" variant={tipo === v ? "default" : "outline"} aria-pressed={tipo === v} onClick={() => setTipo(v)}>
+          <button key={v} type="button" aria-pressed={tipo === v} onClick={() => setTipo(v)} className="rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-150 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 aria-pressed:bg-primary aria-pressed:text-primary-foreground not-aria-pressed:text-muted-foreground not-aria-pressed:hover:text-foreground">
             {t}
-          </Button>
+          </button>
         ))}
       </div>
       <TablaPaginada
         key={tipo}
-        etiqueta="Registros rechazados y motivo"
+        etiqueta="Registros descartados y motivo"
         filas={filas}
         columnas={columnasRechazados}
         claveFila={(r) => r.registro.id}
-        vacio="No hay registros rechazados de este tipo."
+        vacio="No hay descartados de este tipo."
       />
     </div>
   )
@@ -198,38 +198,33 @@ function Rechazados({ rechazados }: { rechazados: RegistroRechazado[] }) {
 function VistaPrevia({ paraCargar, huella }: { paraCargar: Medicion[]; huella: string }) {
   const ejemplo = paraCargar.slice(0, 3).map(aFilaCarga)
   const columnas: Columna<Medicion>[] = [
-    { id: "n", encabezado: "Nº envío", numerica: true, celda: (_m, i) => formatoEntero(i + 1) },
-    { id: "lote", encabezado: "Lote", numerica: true, celda: (_m, i) => Math.floor(i / 500) + 1 },
+    { id: "n", encabezado: "Nº", numerica: true, celda: (_m, i) => formatoEntero(i + 1) },
     ...columnasMedicion(),
   ]
   return (
     <div className="grid gap-3">
       <p className="text-sm">
-        Conjunto exacto que se enviará, en el orden elegido:{" "}
-        <strong className="tabular-nums">{formatoEntero(paraCargar.length)}</strong> filas · huella{" "}
-        <code className="rounded bg-muted px-1">{huella}</code>
+        <strong className="text-lg tabular-nums">{formatoEntero(paraCargar.length)}</strong> registros, en este orden.
       </p>
-      <Alert>
-        <Info />
-        <AlertTitle>El orden de envío no es el orden en la base de datos</AlertTitle>
-        <AlertDescription>
-          Una tabla relacional no garantiza que las filas se devuelvan en el orden en que se insertaron. Para leerlas ordenadas, toda consulta
-          posterior necesita <code>ORDER BY</code>, por ejemplo <code>ORDER BY ciudad, fecha_hora</code>.
-        </AlertDescription>
-      </Alert>
       <TablaPaginada
         etiqueta="Vista previa de la carga"
         filas={paraCargar}
         columnas={columnas}
         claveFila={(m) => m.clave}
-        vacio="No hay filas seleccionadas que cumplan los filtros: no se enviará nada."
+        vacio="No hay nada que guardar con los filtros actuales."
       />
-      {ejemplo.length > 0 && (
-        <details className="text-xs">
-          <summary className="cursor-pointer font-medium">Ver el JSON de las primeras filas tal como se envían al servidor</summary>
-          <pre className="mt-2 overflow-auto rounded-lg border bg-muted/40 p-3 font-mono">{JSON.stringify({ filas: ejemplo }, null, 2)}</pre>
-        </details>
-      )}
+      <DetallesTecnicos>
+        <p>
+          Huella del conjunto: <code className="rounded bg-muted px-1">{huella}</code>. Se envía en lotes de 500. La base de datos no guarda el
+          orden de envío: para leer ordenado hace falta <code>ORDER BY</code> (por ejemplo, <code>ORDER BY ciudad, fecha_hora</code>).
+        </p>
+        {ejemplo.length > 0 && (
+          <>
+            <p>Primeras filas tal como se envían al servidor:</p>
+            <pre className="max-h-[28rem] overflow-auto rounded-lg bg-codigo p-3 font-mono text-foreground">{JSON.stringify({ filas: ejemplo }, null, 2)}</pre>
+          </>
+        )}
+      </DetallesTecnicos>
     </div>
   )
 }
@@ -259,26 +254,22 @@ export function SeccionInspeccion({
   huella: string
   versionDestino: number
 }) {
-  const sinDatos = <p className="text-sm text-muted-foreground">Extrae datos para ver esta fase.</p>
+  const sinDatos = <EstadoVacio icono={ScanSearch}>Extrae datos para ver esta fase.</EstadoVacio>
   const pestanas: { valor: PestanaInspeccion; texto: string; n?: number }[] = [
-    { valor: "json", texto: "JSON original", n: ciudades.filter((c) => c.json !== undefined).length },
+    { valor: "json", texto: "Originales", n: ciudades.filter((c) => c.json !== undefined).length },
     { valor: "transformados", texto: "Transformados", n: procesado?.transformados.length },
     { valor: "validos", texto: "Válidos", n: procesado?.limpieza.validos.length },
-    { valor: "rechazados", texto: "Rechazados", n: procesado?.limpieza.rechazados.length },
-    { valor: "vista-previa", texto: "Vista previa de la carga", n: paraCargar.length },
-    { valor: "supabase", texto: "Datos en Supabase" },
+    { valor: "rechazados", texto: "Descartados", n: procesado?.limpieza.rechazados.length },
+    { valor: "vista-previa", texto: "Lo que se guardará", n: paraCargar.length },
+    { valor: "supabase", texto: "En Supabase" },
   ]
 
   return (
     <Card id="inspeccion">
-      <CardHeader>
-        <CardTitle>
-          <h2>4. Inspección de datos</h2>
-        </CardTitle>
-        <CardDescription>
-          Resultados de cada fase. Las cinco primeras pestañas son <strong>datos locales</strong> del navegador; la última lee lo que hay realmente en Supabase.
-        </CardDescription>
-      </CardHeader>
+      <CabeceraTarjeta
+        titulo="Revisar los datos"
+        subtitulo="Todo está en tu navegador hasta que lo guardas."
+      />
       <CardContent>
         <Tabs value={pestana} onValueChange={(v) => alCambiarPestana(v as PestanaInspeccion)}>
           <div className="-mx-1 overflow-x-auto px-1 pb-1">
@@ -286,7 +277,7 @@ export function SeccionInspeccion({
               {pestanas.map((p) => (
                 <TabsTrigger key={p.valor} value={p.valor} className={cn(p.valor === "supabase" && "font-semibold")}>
                   {p.texto}
-                  {p.n !== undefined && <span className="text-xs text-muted-foreground tabular-nums">({formatoEntero(p.n)})</span>}
+                  {p.n !== undefined && <span className="text-xs font-normal tabular-nums">({formatoEntero(p.n)})</span>}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -300,12 +291,12 @@ export function SeccionInspeccion({
             {!procesado ? sinDatos : (
               <>
                 <p className="text-xs text-muted-foreground">
-                  Un registro por ciudad y hora. Los valores se muestran tal como llegaron: <ValorBruto valor={null} /> o <ValorBruto valor="" /> no se convierten en 0.
+                  Una fila por ciudad y hora. Los vacíos se ven tal cual (<ValorBruto valor={null} />, <ValorBruto valor="" />), no como 0.
                 </p>
                 {procesado.incidencias.length > 0 && (
                   <Alert variant="destructive">
                     <Info />
-                    <AlertTitle>Incidencias estructurales</AlertTitle>
+                    <AlertTitle>Problemas en los datos recibidos</AlertTitle>
                     <AlertDescription>
                       <ul className="list-disc pl-4">
                         {procesado.incidencias.map((i) => <li key={i.ciudad + i.mensaje}>{i.ciudad}: {i.mensaje}</li>)}
@@ -328,7 +319,7 @@ export function SeccionInspeccion({
             {!procesado ? sinDatos : (
               <>
                 <p className="text-xs text-muted-foreground">
-                  Registros que superan todas las reglas de limpieza, en el orden de extracción y sin aplicar filtros.
+                  Lo que pasó la limpieza, sin filtrar.
                 </p>
                 <TablaPaginada
                   etiqueta="Registros válidos"

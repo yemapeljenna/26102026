@@ -15,6 +15,8 @@ export interface ExtraccionCiudad {
   duracionMs?: number
   intentos: number
   descargadoEn?: string
+  /** Solo en desarrollo: la respuesta salió de sessionStorage, sin llamar a la API. */
+  desdeCache?: boolean
 }
 
 export interface Extraccion {
@@ -51,10 +53,12 @@ export type PestanaInspeccion =
   | "vista-previa"
   | "supabase"
 
-/** Resumen del periodo de una ciudad, calculado con sus registros válidos. */
-export interface ResumenCiudad {
-  registros: number
-  temperaturaMedia: number
-  humedadMedia: number
-  precipitacionTotal: number
+/** Evento de la tarjeta «Actividad del pipeline». */
+export interface EventoPipeline {
+  id: number
+  tipo: "inicio" | "peticion" | "fase" | "lote" | "error"
+  texto: string
+  detalle?: string
+  /** Marca de tiempo (ms). */
+  hora: number
 }
